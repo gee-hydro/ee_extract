@@ -33,24 +33,21 @@ def image_extract_points(img, points, proj=None, set_date=False):
 
 
 def col_extract_points(points, col):
-    proj = col.first().select(0).projection().getInfo()
-    res = col.map(lambda img: image_extract_points(
-        img, points, proj, set_date=True)).flatten()
+  proj = col.first().select(0).projection().getInfo()
+  res = col.map(lambda img: image_extract_points(
+      img, points, proj, set_date=True)).flatten()
+  return res
+
+
+def col_export_points(points, col, task, drive=False, **kw):
+  res = col_extract_points(points, col)
+  if drive:
+    ee.batch.Export.table.toDrive(res, task, **kw).start()
     return res
-
-
-def col_export_points(points, col, task):
-    res = col_extract_points(points, col)
+  else:
     df = shp2df(res, task)
     return df
 
-#   ee.batch.Export.table.toDrive(
-#       collection=res,
-#       description=task,
-#       folder="gee",
-#       fileNamePrefix=task,
-#       fileFormat="GeoJSON"
-#   ).start()
 
 def export_image(img, task, prefix=""):
   task = prefix + task
@@ -76,6 +73,7 @@ def shp2df(fc, outfile=None):
   if None != outfile:
     df.to_csv(outfile, index=False)
   return df
+
 
 def hello():
   print("Hello, World!")
